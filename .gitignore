@@ -1,0 +1,9 @@
+
+build
+target
+
+.gradle
+.vscode
+.idea
+.bsp
+__pycache__

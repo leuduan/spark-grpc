@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package io.flex;
+
+// test
+
+enum AddressType {
+  HOME = 0;
+  WORK = 1;
+}
+
+message Subject{
+  string name = 1;
+  int32 priority = 2;
+}
+
+message Address {
+  string address = 1;
+  repeated int32 nums = 2;
+  AddressType type = 3;
+}
+
+message Person {
+  string name = 1;
+  repeated int32 id = 2;
+  Address addr = 3;
+  map<string, Subject> subjects = 4;
+}

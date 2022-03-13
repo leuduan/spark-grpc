@@ -1,0 +1,342 @@
+syntax = "proto3";
+import "google/protobuf/any.proto";
+
+package io.flex;
+
+service SparkQueryService {
+  rpc executeQuery (ExecuteQueryRequest) returns (ExecuteQueryResponse) {}
+  rpc getQuery (GetQueryRequest) returns (GetQueryResponse) {}
+  rpc getSparkStatus(GetSparkStatusRequest) returns (GetSparkStatusResponse) {}
+  rpc getStage(GetStageRequest) returns (GetStageResponse){}
+}
+
+enum SupportedFormat {
+  PARQUET = 0;
+  CSV = 1;
+  AVRO = 2;
+}
+
+message DataSource  {
+  string name = 1;
+  string service = 2;
+  string bucket = 3;
+  string path = 4;
+  SupportedFormat format = 5;
+}
+
+message SparkSqlQuery {
+  string query = 1;
+  map<string, DataSource> data_sources = 2;
+}
+
+message ExecuteQueryRequest {
+  string request_id = 1;
+  SparkSqlQuery query = 2;
+}
+
+message ExecuteQueryResponse {
+  string request_id = 1;
+}
+
+message GetQueryRequest {
+  string request_id = 1;
+}
+
+
+message GetQueryResponse {
+  string request_id = 1;
+  JobStatus status = 2;
+  repeated JobData spark_jobs = 3;
+}
+
+message GetSparkStatusRequest {
+
+}
+
+message GetSparkStatusResponse {
+  repeated SparkExecutorInfo executorInfos = 1;
+  repeated ExecutorSummary executors = 2;
+  ApplicationInfo applicationInfo = 3;
+}
+
+message GetStageRequest {
+  int32 id = 1;
+}
+
+message GetStageResponse {
+  int32 id = 1;
+  repeated StageData data = 2;
+}
+// package org.apache.spark.status.api.v1
+enum JobStatus {
+  JOB_UNKNOWN = 0;
+  JOB_RUNNING = 1;
+  JOB_SUCCEEDED = 2;
+  JOB_FAILED = 3;
+}
+
+message JobData {
+  int32 jobId = 1;
+  string name = 2;
+  string description = 3;
+  string submissionTime = 4;
+  string completionTime = 5;
+  repeated int32 stageIds = 6;
+  JobStatus status = 7;
+  int32 numTasks = 8;
+  int32 numActiveTasks = 9;
+  int32 numCompletedTasks = 10;
+  int32 numSkippedTasks = 11;
+  int32 numFailedTasks = 12;
+  int32 numKilledTasks = 13;
+  int32 numCompletedIndices = 14;
+  int32 numActiveStages = 15;
+  int32 numCompletedStages = 16;
+  int32 numSkippedStages = 17;
+  int32 numFailedStages = 18;
+  map<string, int32> killedTasksSummary = 19;
+}
+
+message SparkExecutorInfo {
+  string host = 1;
+  int32 port = 2;
+  int64 cacheSize = 3;
+  int32 numRunningTasks = 4;
+  int64 usedOnHeapStorageMemory = 5;
+  int64 usedOffHeapStorageMemory = 6;
+  int64 totalOnHeapStorageMemory = 7;
+  int64 totalOffHeapStorageMemory = 8;
+}
+
+message ApplicationInfo {
+  string id = 1;
+  string name = 2;
+  int32 coresGranted = 3;
+  int32 maxCores = 4;
+  int32 coresPerExecutor = 5;
+  int32 memoryPerExecutorMB = 6;
+  repeated ApplicationAttemptInfo attempts = 7;
+}
+
+message ApplicationAttemptInfo {
+  string attemptId = 1;
+  string startTime = 2;
+  string endTime = 3;
+  string lastUpdated = 4;
+  int64 duration = 5;
+  string sparkUser = 6;
+  bool completed = 7;
+  string appSparkVersion = 8;
+}
+
+message ExecutorSummary {
+  string id = 1            ;
+  string hostPort = 2;
+  bool isActive = 3;
+  int32 rddBlocks = 4;
+  int64 memoryUsed = 5;
+  int64 diskUsed = 6;
+  int32 totalCores = 7;
+  int32 maxTasks = 8;
+  int32 activeTasks = 9;
+  int32 failedTasks = 10;
+  int32 completedTasks = 11;
+  int32 totalTasks = 12;
+  int64 totalDuration = 13;
+  int64 totalGCTime = 14;
+  int64 totalInputBytes = 15;
+  int64 totalShuffleRead = 16;
+  int64 totalShuffleWrite = 17;
+  bool isBlacklisted = 18;
+  int64 maxMemory = 19;
+  string addTime = 20;
+  string removeTime = 21;
+  string removeReason = 22;
+  map<string, string> executorLogs = 23;
+  MemoryMetrics memoryMetrics = 24;
+  repeated int32 blacklistedInStages = 25;
+  //  int32 peakMemoryMetrics = Option[ExecutorMetrics],
+  map<string, string> attributes = 27;
+  map<string, ResourceInformation> resources = 28;
+  int32 resourceProfileId = 29;
+  bool isExcluded = 30;
+  repeated int32 excludedInStages = 31;
+}
+
+message MemoryMetrics {
+  int64 usedOnHeapStorageMemory = 1;
+  int64 usedOffHeapStorageMemory = 2;
+  int64 totalOnHeapStorageMemory = 3;
+  int64 totalOffHeapStorageMemory = 4;
+}
+
+message ResourceInformation {
+  string name = 1;
+  repeated string addresses = 2;
+}
+
+enum StageStatus {
+  STAGE_ACTIVE = 0;
+  STAGE_COMPLETE = 1;
+  STAGE_FAILED = 2;
+  STAGE_PENDING = 3;
+  STAGE_SKIPPED = 4;
+}
+
+message  StageData {
+  StageStatus status = 1;
+  int32 stageId = 2;
+  int32 attemptId = 3;
+  int32 numTasks = 4;
+  int32 numActiveTasks = 5;
+  int32 numCompleteTasks = 6;
+  int32 numFailedTasks = 7;
+  int32 numKilledTasks = 8;
+  int32 numCompletedIndices = 9;
+
+  string submissionTime = 10;
+  string firstTaskLaunchedTime = 11;
+  string completionTime = 12;
+  string failureReason = 13;
+
+  int64 executorDeserializeTime = 14;
+  int64 executorDeserializeCpuTime = 15;
+  int64 executorRunTime = 16;
+  int64 executorCpuTime = 17;
+  int64 resultSize = 18;
+  int64 jvmGcTime = 19;
+  int64 resultSerializationTime = 20;
+  int64 memoryBytesSpilled = 21;
+  int64 diskBytesSpilled = 22;
+  int64 peakExecutionMemory = 23;
+  int64 inputBytes = 24;
+  int64 inputRecords = 25;
+  int64 outputBytes = 26;
+  int64 outputRecords = 27;
+  int64 shuffleRemoteBlocksFetched = 28;
+  int64 shuffleLocalBlocksFetched = 29;
+  int64 shuffleFetchWaitTime = 30;
+  int64 shuffleRemoteBytesRead = 31;
+  int64 shuffleRemoteBytesReadToDisk = 32;
+  int64 shuffleLocalBytesRead = 33;
+  int64 shuffleReadBytes = 34;
+  int64 shuffleReadRecords = 35;
+  int64 shuffleWriteBytes = 36;
+  int64 shuffleWriteTime = 37;
+  int64 shuffleWriteRecords = 38;
+
+  string name = 39;
+  string description = 40;
+  string details = 41;
+  string schedulingPool = 42;
+
+  repeated int32 rddIds = 43;
+  repeated AccumulableInfo accumulatorUpdates = 44;
+  map<int64, TaskData> tasks = 45;
+  map<string, ExecutorStageSummary> executorSummary = 46;
+  map<string, int32> killedTasksSummary = 47;
+  int32 resourceProfileId = 48;
+  //    ExecutorMetrics peakExecutorMetrics = 49;
+  //    val taskMetricsDistributions: Option[TaskMetricDistributions];
+  //    val executorMetricsDistributions: Option[ExecutorMetricsDistributions]
+}
+
+
+message ExecutorStageSummary {
+  int64 taskTime = 1;
+  int32 failedTasks = 2;
+  int32 succeededTasks = 3;
+  int32 killedTasks = 4;
+  int64 inputBytes = 5;
+  int64 inputRecords = 6;
+  int64 outputBytes = 7;
+  int64 outputRecords = 8;
+  int64 shuffleRead = 9;
+  int64 shuffleReadRecords = 10;
+  int64 shuffleWrite = 11;
+  int64 shuffleWriteRecords = 12;
+  int64 memoryBytesSpilled = 13;
+  int64 diskBytesSpilled = 14;
+  bool isBlacklistedForStage = 15;
+  // val peakMemoryMetrics: Option[ExecutorMetrics],
+  bool isExcludedForStage = 17;
+}
+
+
+message AccumulableInfo {
+  int64 id = 1;
+  string name = 2;
+  string update = 3;
+  string value = 4;
+}
+
+message TaskData {
+  int64 taskId = 1;
+  int32 index = 2;
+  int32 attempt = 3;
+  string launchTime = 4;
+  string resultFetchStart = 5;
+  int64 duration = 6;
+  string executorId = 7;
+  string host = 8;
+  string status = 9;
+  string taskLocality = 10;
+  bool speculative = 11;
+  //    val accumulatorUpdates: Seq[AccumulableInfo],
+  string errorMessage = 13;
+  TaskMetrics taskMetrics = 14;
+  map<string, string> executorLogs = 15;
+  int64 schedulerDelay = 16;
+  int64 gettingResultTime = 17;
+}
+
+message TaskMetrics {
+  int64 executorDeserializeTime = 1;
+  int64 executorDeserializeCpuTime = 2;
+  int64 executorRunTime = 3;
+  int64 executorCpuTime = 4;
+  int64 resultSize = 5;
+  int64 jvmGcTime = 6;
+  int64 resultSerializationTime = 7;
+  int64 memoryBytesSpilled = 8;
+  int64 diskBytesSpilled = 9;
+  int64 peakExecutionMemory = 10;
+  InputMetrics inputMetrics = 11;
+  OutputMetrics outputMetrics = 12;
+  ShuffleReadMetrics shuffleReadMetrics = 13;
+  ShuffleWriteMetrics shuffleWriteMetrics = 14;
+}
+
+message InputMetrics {
+  int64 bytesRead = 1;
+  int64 recordsRead = 2;
+}
+
+message OutputMetrics {
+  int64 bytesWritten = 1;
+  int64 recordsWritten = 2;
+}
+
+message ShuffleReadMetrics {
+  int64 remoteBlocksFetched = 1;
+  int64 localBlocksFetched = 2;
+  int64 fetchWaitTime = 3;
+  int64 remoteBytesRead = 4;
+  int64 remoteBytesReadToDisk = 5;
+  int64 localBytesRead = 6;
+  int64 recordsRead = 7;
+}
+
+message ShuffleWriteMetrics {
+  int64 bytesWritten = 1;
+  int64 writeTime = 2;
+  int64 recordsWritten = 3;
+}
+
+enum TaskStatus {
+  TASK_UNKNOWN = 0;
+  TASK_RUNNING = 1;
+  TASK_KILLED = 2;
+  TASK_FAILED = 3;
+  TASK_SUCCESS = 4;
+}
